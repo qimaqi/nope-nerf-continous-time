@@ -11,6 +11,7 @@ pose:
   max_index: 120
   device: cuda:0
   memorize: True
+  scheduler: True
 dataloading:
   path: /SSD1/qimaqi/Tanks
   scene: ['Ignatius']

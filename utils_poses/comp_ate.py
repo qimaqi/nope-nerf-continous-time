@@ -14,7 +14,7 @@ def rotation_error(pose_error):
     b = pose_error[1, 1]
     c = pose_error[2, 2]
     d = 0.5*(a+b+c-1.0)
-    rot_error = np.arccos(max(min(d, 1.0), -1.0))
+    rot_error = np.rad2deg(np.arccos(max(min(d, 1.0), -1.0)))
     return rot_error
 
 def translation_error(pose_error):
@@ -45,6 +45,10 @@ def compute_rpe(gt, pred):
         
         trans_errors.append(translation_error(rel_err))
         rot_errors.append(rotation_error(rel_err))
+    import pandas as pd
+    df = pd.DataFrame({'rot_errors': rot_errors})
+    df.describe()    
+    print("rot_errors", rot_errors)
     rpe_trans = np.mean(np.asarray(trans_errors))
     rpe_rot = np.mean(np.asarray(rot_errors))
     return rpe_trans, rpe_rot
