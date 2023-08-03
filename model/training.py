@@ -232,7 +232,7 @@ class Trainer(object):
         (img,  depth_input, camera_mat_gt, scale_mat, img_idx) = self.process_data_dict(data)   
         if use_ref_imgs:
             (ref_img, depth_ref, ref_idx) = self.process_data_reference(data)
-
+            # print("ref_idx", ref_idx, "img_idx", img_idx)
         device = self.device
         batch_size, _, h, w = img.shape
         batch_size, _, h_depth, w_depth = depth_input.shape
@@ -289,7 +289,7 @@ class Trainer(object):
             gt_depth = None
 
         if use_ref_imgs:
-            c2w_ref = self.pose_param_net(ref_idx)
+            c2w_ref = self.pose_param_net(ref_idx) # run poses
             if self.distortion_net is not None:
                 scale_ref, shift_ref = self.distortion_net(ref_idx)
                 if self.shift_first:

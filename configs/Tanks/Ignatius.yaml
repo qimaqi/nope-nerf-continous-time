@@ -3,12 +3,12 @@ depth:
 pose:
   learn_pose: True
 dataloading:
-  path: /cluster/work/cvl/qimaqi/Tanks
+  path: /SSD1/qimaqi/Tanks
   scene: ['Ignatius']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/Ignatius_debug
+  out_dir:  out/Tanks/Ignatius_debug_0
   auto_scheduler: True
 extract_images:
   resolution: [540, 960]

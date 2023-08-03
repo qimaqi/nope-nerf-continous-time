@@ -93,26 +93,36 @@ def train(cfg):
         else:
             init_pose = None
             
-        pose_param_net = mdl.LearnPoseNet_couple(n_views, cfg['pose']['learn_R'], 
+        pose_param_net = mdl.LearnPoseNet_decouple(n_views, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg, init_c2w=init_pose).to(device=device)
 
         
-        optimizer_pose = optim.Adam(pose_param_net.parameters(), lr=cfg['training']['pose_lr'])
-        checkpoint_io_pose = mdl.CheckpointIO(out_dir, model=pose_param_net, optimizer=optimizer_pose)
+        optimizer_pose_trans = optim.Adam(pose_param_net.transnet.parameters(), lr=cfg['pose']['pose_lr_t'])
+        optimizer_pose_rots = optim.Adam(pose_param_net.rotsnet.parameters(), lr=cfg['pose']['pose_lr_r'])
+        checkpoint_io_pose_trans = mdl.CheckpointIO(out_dir, model=pose_param_net.transnet, optimizer=optimizer_pose_trans)
+        checkpoint_io_pose_rots = mdl.CheckpointIO(out_dir, model=pose_param_net.rotsnet, optimizer=optimizer_pose_rots)
+        optimizer_pose = [optimizer_pose_trans, optimizer_pose_rots]
+        # init 
         pose_param_net.init_posenet_train(optimizer_pose)
-        
         try:
             pose_load_dir = cfg['training']['load_pose_dir']
-            load_dict = checkpoint_io_pose.load(pose_load_dir, load_model_only=cfg['training']['load_ckpt_model_only'])
+            load_dict_trans = checkpoint_io_pose_trans.load(pose_load_dir, load_model_only=cfg['training']['load_ckpt_model_only'])
+            load_dict_rots = checkpoint_io_pose_rots.load(pose_load_dir, load_model_only=cfg['training']['load_ckpt_model_only'])
         except FileExistsError:
-            load_dict = dict()
-        epoch_it = load_dict.get('epoch_it', -1)
+            load_dict_trans = dict()
+            load_dict_rots = dict()
+        epoch_it = load_dict_trans.get('epoch_it', -1)
         if not auto_scheduler:
-            scheduler_pose = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose, 
+            scheduler_pose_trans = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
                                                                 milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
                                                                 gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
+            scheduler_pose_rots = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
+                                                                milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
+                                                                gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
     else:
-        optimizer_pose = None
+        optimizer_pose_rots = None
+        optimizer_pose_trans = None
+        optimizer_pose = [optimizer_pose_trans, optimizer_pose_rots]
         pose_param_net = None
     # init distortion parameters
     if cfg['distortion']['learn_distortion']:
@@ -256,7 +266,8 @@ def train(cfg):
                 checkpoint_io.save('model.pt', epoch_it=epoch_it, it=it,
                                 loss_val_best=metric_val_best, scheduling_start=scheduling_start, patient_count=patient_count)
                 if cfg['pose']['learn_pose']:
-                    checkpoint_io_pose.save('model_pose.pt', epoch_it=epoch_it, it=it)
+                    checkpoint_io_pose_rots.save('model_pose_rots.pt', epoch_it=epoch_it, it=it)
+                    checkpoint_io_pose_trans.save('model_pose_trans.pt', epoch_it=epoch_it, it=it)
                 if cfg['pose']['learn_focal']:
                     checkpoint_io_focal.save('model_focal.pt', epoch_it=epoch_it, it=it)
                 if cfg['distortion']['learn_distortion']:
@@ -268,7 +279,8 @@ def train(cfg):
                 checkpoint_io.save('model_%d.pt' % it, epoch_it=epoch_it, it=it,
                                 loss_val_best=metric_val_best, scheduling_start=scheduling_start, patient_count=patient_count)
                 if cfg['pose']['learn_pose']:
-                    checkpoint_io_pose.save('model_pose_%d.pt' % it, epoch_it=epoch_it, it=it)
+                    checkpoint_io_pose_rots.save('model_pose_rots_%d.pt'  % it, epoch_it=epoch_it, it=it)
+                    checkpoint_io_pose_trans.save('model_pose_trans_%d.pt'  % it , epoch_it=epoch_it, it=it)
                 if cfg['pose']['learn_focal']:
                     checkpoint_io_focal.save('model_focal_%d.pt' % it, epoch_it=epoch_it, it=it)
                 if cfg['distortion']['learn_distortion']:
@@ -277,13 +289,11 @@ def train(cfg):
         pc_loss_epoch = np.mean(pc_loss_epoch)
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
-        logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)
-
+        logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
         # pose_param_net.memorize(optimizer_pose)
-
-
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
+                print("learned_poses start")
                 learned_poses = torch.stack([pose_param_net(i) for i in range(n_views)])
                 print("learned_poses 0 ")
                 print(learned_poses[0])
@@ -291,6 +301,14 @@ def train(cfg):
                 print(learned_poses[1])
                 print("learned_poses -1 ")
                 print(learned_poses[-1])
+
+                # for name, param in pose_param_net.rotsnet.named_parameters():
+                #     if param.grad is not None:
+                #         print(f'Parameter name: {name}')
+                #         print(f'Gradient:')
+                #         print(torch.mean(param.grad))
+                #         print('\n')
+
             c2ws_est_aligned = align_ate_c2b_use_a2b(learned_poses, gt_poses)
             ate = compute_ATE(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
             rpe_trans, rpe_rot = compute_rpe(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
@@ -302,6 +320,8 @@ def train(cfg):
             }
             for l, num in eval_dict.items():
                 logger.add_scalar('eval/'+l, num, it)
+
+
         if (eval_img_every>0 and (epoch_it % eval_img_every) == 0):    
             L2_loss_mean = np.mean(L2_loss_epoch)
             psnr = mse2psnr(L2_loss_mean)
@@ -341,9 +361,13 @@ def train(cfg):
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = new_lr
                 if cfg['pose']['learn_pose']:
-                    new_lr_pose = cfg['training']['pose_lr'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
-                    for param_group in optimizer_pose.param_groups:
-                        param_group['lr'] = new_lr_pose
+                    new_lr_pose_t = cfg['pose']['pose_lr_t'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
+                    new_lr_pose_r = cfg['pose']['pose_lr_r'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
+                    for param_group in optimizer_pose[0].param_groups:
+                        param_group['lr'] = new_lr_pose_t
+                    for param_group in optimizer_pose[1].param_groups:
+                        param_group['lr'] = new_lr_pose_r
+
                 if cfg['pose']['learn_focal']:
                     new_lr_focal = cfg['training']['focal_lr'] * ((cfg['training']['scheduler_gamma_focal'])**int((epoch_it-scheduling_start)/100))
                     for param_group in optimizer_focal.param_groups:

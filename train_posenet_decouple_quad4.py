@@ -93,7 +93,7 @@ def train(cfg):
         else:
             init_pose = None
             
-        pose_param_net = mdl.LearnPoseNet_decouple(n_views, cfg['pose']['learn_R'], 
+        pose_param_net = mdl.LearnPoseNet_decouple_quad4(n_views, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg, init_c2w=init_pose).to(device=device)
 
         
@@ -217,6 +217,7 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
+        pose_param_net.clean_memory()
         for batch in train_loader:
             it += 1
             idx = batch.get('img.idx')
@@ -289,10 +290,25 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
+        pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
+                print("learned_poses start")
                 learned_poses = torch.stack([pose_param_net(i) for i in range(n_views)])
-                print(learned_poses)
+                print("learned_poses 0 ")
+                print(learned_poses[0])
+                print("learned_poses 1 ")
+                print(learned_poses[1])
+                print("learned_poses -1 ")
+                print(learned_poses[-1])
+
+                # for name, param in pose_param_net.rotsnet.named_parameters():
+                #     if param.grad is not None:
+                #         print(f'Parameter name: {name}')
+                #         print(f'Gradient:')
+                #         print(torch.mean(param.grad))
+                #         print('\n')
+
             c2ws_est_aligned = align_ate_c2b_use_a2b(learned_poses, gt_poses)
             ate = compute_ATE(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
             rpe_trans, rpe_rot = compute_rpe(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
@@ -304,6 +320,8 @@ def train(cfg):
             }
             for l, num in eval_dict.items():
                 logger.add_scalar('eval/'+l, num, it)
+
+
         if (eval_img_every>0 and (epoch_it % eval_img_every) == 0):    
             L2_loss_mean = np.mean(L2_loss_epoch)
             psnr = mse2psnr(L2_loss_mean)

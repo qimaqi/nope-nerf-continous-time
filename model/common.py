@@ -308,6 +308,41 @@ def make_c2w(r, t):
     c2w = torch.cat([R, t.unsqueeze(1)], dim=1)  # (3, 4)
     c2w = convert3x4_4x4(c2w)  # (4, 4)
     return c2w
+
+def quat2mat(quat):
+    B = quat.size(0) # Nx3
+    norm_quat = torch.cat([quat[:, :1].detach() * 0 + 1, quat], dim=1)
+    norm_quat = norm_quat / norm_quat.norm(p=2, dim=1, keepdim=True)
+    w, x, y, z = (norm_quat[:, 0], norm_quat[:, 1], norm_quat[:, 2], norm_quat[:, 3])
+    w2, x2, y2, z2 = (w.pow(2), x.pow(2), y.pow(2), z.pow(2))
+    wx, wy, wz = w * x, w * y, w * z
+    xy, xz, yz = x * y, x * z, y * z
+    rotMat = torch.stack(
+        [
+            w2 + x2 - y2 - z2,
+            2 * xy - 2 * wz,
+            2 * wy + 2 * xz,
+            2 * wz + 2 * xy,
+            w2 - x2 + y2 - z2,
+            2 * yz - 2 * wx,
+            2 * xz - 2 * wy,
+            2 * wx + 2 * yz,
+            w2 - x2 - y2 + z2,
+        ],
+        dim=1,
+    ).reshape(B, 3, 3)
+    return rotMat
+
+def make_c2w_quad(r, t):
+    """
+    :param r:  (3, ) quad            torch tensor
+    :param t:  (3, ) translation vector     torch tensor
+    :return:   (4, 4)
+    """
+    R = quat2mat(r)  # (3, 3)
+    c2w = torch.cat([R, t.unsqueeze(1)], dim=1)  # (3, 4)
+    c2w = convert3x4_4x4(c2w)  # (4, 4)
+    return c2w
     
 def convert3x4_4x4(input):
     """
