@@ -18,7 +18,7 @@ class DataField(object):
                  use_DPT=False, scene_name=[' '], mode='train', spherify=False, 
                  load_ref_img=False,customized_poses=False,
                  customized_focal=False,resize_factor=2, depth_net='dpt',crop_size=0, 
-                 random_ref=False,norm_depth=False,load_colmap_poses=True, sample_rate=8, **kwargs):
+                 random_ref=False,norm_depth=False,load_colmap_poses=True, sample_rate=8, skip=1, **kwargs):
         """load images, depth maps, etc.
         Args:
             model_path (str): path of dataset
@@ -53,6 +53,21 @@ class DataField(object):
         if crop_size!=0:
             depth_net = depth_net + '_' + str(crop_size)
         poses, bds, imgs, img_names, crop_ratio, focal_crop_factor = _load_data(load_dir, factor=resize_factor, crop_size=crop_size, load_colmap_poses=load_colmap_poses)
+        # skip operation
+        if skip > 1:
+            poses = poses[...,::skip]
+            bds = bds[...,::skip]
+            imgs = imgs[...,::skip]
+            img_names = img_names[::skip]
+            # print(np.shape(poses))
+            # print(np.shape(bds))
+            # print(np.shape(imgs))
+            # print(np.shape(img_names))
+            #imgs = imgs[::skip]
+            #img_names = img_names[::skip]
+            #poses = poses[::skip]
+        
+        
         if load_colmap_poses:
             poses = np.concatenate([poses[:, 1:2, :], -poses[:, 0:1, :], poses[:, 2:, :]], 1)
             poses = np.moveaxis(poses, -1, 0).astype(np.float32)
@@ -76,6 +91,8 @@ class DataField(object):
             bottom = bottom.repeat(poses_tensor.shape[0], 1, 1)
             c2ws_colmap = torch.cat([poses_tensor, bottom], 1)
             
+
+
 
         imgs = np.moveaxis(imgs, -1, 0).astype(np.float32)
         imgs = np.transpose(imgs, (0, 3, 1, 2))

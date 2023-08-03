@@ -6,10 +6,12 @@ pose:
   skip: [4]
   pose_lr_t: 1.e-4                                          # learning rate of camera poses
   lr_pose_end: 2.e-5                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
-  pose_lr_r: 1.e-6                                          # learning rate of camera poses
+  pose_lr_r: 5.e-5                                          # learning rate of camera poses
   lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   max_index: 120
   device: cuda:0
+  cam_coord: False
+  memorize: True
 dataloading:
   path: /SSD1/qimaqi/Tanks
   scene: ['Ignatius']

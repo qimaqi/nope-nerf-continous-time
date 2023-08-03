@@ -93,7 +93,7 @@ def train(cfg):
         else:
             init_pose = None
             
-        pose_param_net = mdl.LearnPoseNet_decouple(n_views, cfg['pose']['learn_R'], 
+        pose_param_net = mdl.LearnPoseNet_decouple_quad3(n_views, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg, init_c2w=init_pose).to(device=device)
 
         
@@ -217,7 +217,8 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
-        pose_param_net.clean_memory()
+        if cfg['pose']['memorize']:
+            pose_param_net.clean_memory()
         for batch in train_loader:
             it += 1
             idx = batch.get('img.idx')
@@ -290,7 +291,8 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        # pose_param_net.memorize(optimizer_pose)
+        if cfg['pose']['memorize']:
+            pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 print("learned_poses start")

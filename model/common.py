@@ -340,6 +340,7 @@ def make_c2w_quad(r, t):
     :return:   (4, 4)
     """
     R = quat2mat(r)  # (3, 3)
+    R = R.reshape(3,3)
     c2w = torch.cat([R, t.unsqueeze(1)], dim=1)  # (3, 4)
     c2w = convert3x4_4x4(c2w)  # (4, 4)
     return c2w

@@ -8,6 +8,7 @@ model:
   pos_enc_levels: 10
   dir_enc_levels: 4
 dataloading:
+  skip: 1
   dataset_name: any
   path: 
   scene: []
@@ -61,7 +62,8 @@ pose:
   fx_only: False
   focal_order: 2
   init_pose_type: gt
-  init_focal_type: gt
+  init_focal_type: gt\
+  cam_coord: False
 distortion:
   learn_distortion: True
   fix_scaleN: True
