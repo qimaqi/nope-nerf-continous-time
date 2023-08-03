@@ -163,7 +163,7 @@ class LearnPoseNet_decouple(nn.Module):
         # t = self.t[cam_id]  # (3, )
         c2w = torch.cat([r.reshape(3,3), t.reshape(3,1)], dim=-1)
         c2w = torch.cat([c2w, torch.tensor([0,0,0,1]).reshape(1,4).to(c2w.device) ], dim=0)
-        c2w = torch.inverse(c2w)
+        # c2w = torch.inverse(c2w)
         # learn a delta pose between init pose and target pose, if a init pose is provided
         if self.init_c2w is not None:
             c2w = c2w @ self.init_c2w[cam_id]
