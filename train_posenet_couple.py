@@ -93,11 +93,14 @@ def train(cfg):
         else:
             init_pose = None
             
-        pose_param_net = mdl.LearnPoseNet(n_views, cfg['pose']['learn_R'], 
+        pose_param_net = mdl.LearnPoseNet_couple(n_views, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg, init_c2w=init_pose).to(device=device)
+
         
         optimizer_pose = optim.Adam(pose_param_net.parameters(), lr=cfg['training']['pose_lr'])
         checkpoint_io_pose = mdl.CheckpointIO(out_dir, model=pose_param_net, optimizer=optimizer_pose)
+        pose_param_net.init_posenet_train(optimizer_pose)
+        
         try:
             pose_load_dir = cfg['training']['load_pose_dir']
             load_dict = checkpoint_io_pose.load(pose_load_dir, load_model_only=cfg['training']['load_ckpt_model_only'])

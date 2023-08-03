@@ -109,6 +109,7 @@ class DataField(object):
         self.i_test = i_test
         image_list_train = [img_names[i] for i in i_train]
         image_list_test = [img_names[i] for i in i_test]
+        print('train set: ', image_list_train)
         print('test set: ', image_list_test)
 
         if customized_poses:
@@ -165,6 +166,7 @@ class DataField(object):
             data_in = self.transform(data_in)
             data['normalised_img'] = data_in['image']
         data['idx'] = idx
+        
     def load_ref_img(self, idx, data={}):
         if self.random_ref:
             if idx==self.N_imgs-1:

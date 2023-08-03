@@ -136,6 +136,7 @@ class OurDataset(data.Dataset):
             else:
                 data[field_name] = field_data
 
+        # print("data", data.keys() ) # ['img', 'img.idx', 'img.ref_dpts', 'img.ref_imgs', 'img.ref_idxs', 'img.dpt', 'img.camera_mat', 'img.scale_mat'])
         return data
 
 

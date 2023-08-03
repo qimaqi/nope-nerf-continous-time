@@ -76,8 +76,14 @@ class Trainer(object):
         self.model.train()
         self.optimizer.zero_grad()
         if self.pose_param_net:
-           self.pose_param_net.train()
-           self.optimizer_pose.zero_grad()
+            if isinstance(self.optimizer_pose, list):
+                self.pose_param_net.transnet.train()
+                self.pose_param_net.rotsnet.train()
+                self.optimizer_pose[0].zero_grad()     
+                self.optimizer_pose[1].zero_grad()          
+            else:
+                self.pose_param_net.train()
+                self.optimizer_pose.zero_grad()
         if self.focal_net:
             self.focal_net.train()
             self.optimizer_focal.zero_grad()
@@ -89,7 +95,11 @@ class Trainer(object):
         loss.backward()
         self.optimizer.step()
         if self.optimizer_pose:
-            self.optimizer_pose.step()
+            if isinstance(self.optimizer_pose, list):
+                self.optimizer_pose[0].step()
+                self.optimizer_pose[1].step()
+            else:
+                self.optimizer_pose.step()
         if self.optimizer_focal:
             self.optimizer_focal.step()
         if self.optimizer_distortion:
@@ -169,6 +179,7 @@ class Trainer(object):
         device = self.device
         img = data.get('img').to(device)
         img_idx = data.get('img.idx')
+        # print("img_idx", img_idx)
         dpt = data.get('img.dpt').to(device).unsqueeze(1)
         camera_mat = data.get('img.camera_mat').to(device)
         scale_mat = data.get('img.scale_mat').to(device)
