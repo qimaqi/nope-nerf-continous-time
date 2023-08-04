@@ -10,10 +10,11 @@ pose:
   lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   max_index: 120
   device: cuda:0
-  cam_coord: False
+  cam_coord: True
   memorize: True
+  scheduler: True
 dataloading:
-  path: /SSD1/qimaqi/Tanks
+  path: /workspace/eth/datasets/Tanks
   scene: ['Ignatius']
   customized_focal: False
   random_ref: 1

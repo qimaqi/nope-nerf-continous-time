@@ -13,7 +13,7 @@ pose:
   memorize: False
   scheduler: True
 dataloading:
-  path: /SSD1/qimaqi/Tanks
+  path: /workspace/eth/datasets/Tanks
   scene: ['Ignatius']
   customized_focal: False
   random_ref: 1

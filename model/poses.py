@@ -24,7 +24,7 @@ class LearnPose(nn.Module):
         # if (cam_id-4)%8 == 0:
         cam_id = int(cam_id)
         r = self.r[cam_id]  # (3, 3) rot angle
-        print("r", r)
+        # print("r", r)
         t = self.t[cam_id]  # (3, )
         # print('r', r.size())
         # print('t', t.size())
@@ -363,6 +363,15 @@ class LearnPoseNet_decouple_quad3(nn.Module): # _quad 4
         #     return c2w.to(self.cfg['pose']['device'])
 
         cam_id = int(cam_id)
+        # if cam_id ==0 :
+        #     r = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     t = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     self.r[cam_id] = r.clone().detach()
+        #     self.t[cam_id] = t.clone().detach()
+        #     c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
+        #     return c2w
+
+
         r = self.rotsnet(cam_id)
         t = self.transnet(cam_id)
         self.t[cam_id] = t.clone().detach()
@@ -473,13 +482,13 @@ class LearnPoseNet_decouple_so3(nn.Module):
         #     return c2w.to(self.cfg['pose']['device'])
 
         cam_id = int(cam_id)
-        if cam_id ==0 :
-            r = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
-            t = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
-            self.r[cam_id] = r.clone().detach()
-            self.t[cam_id] = t.clone().detach()
-            c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
-            return c2w
+        # if cam_id ==0 :
+        #     r = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     t = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     self.r[cam_id] = r.clone().detach()
+        #     self.t[cam_id] = t.clone().detach()
+        #     c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
+        #     return c2w
 
         r = self.rotsnet(cam_id)
         t = self.transnet(cam_id)
