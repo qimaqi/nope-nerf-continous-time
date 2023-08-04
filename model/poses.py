@@ -24,7 +24,7 @@ class LearnPose(nn.Module):
         # if (cam_id-4)%8 == 0:
         cam_id = int(cam_id)
         r = self.r[cam_id]  # (3, 3) rot angle
-        print("r", r)
+        # print("r", r)
         t = self.t[cam_id]  # (3, )
         # print('r', r.size())
         # print('t', t.size())
@@ -408,6 +408,7 @@ class LearnPoseNet_decouple_so3(nn.Module):
         self.t_m = torch.zeros(size=(self.num_cams, 3))
         self.r_m = torch.zeros(size=(self.num_cams, 3))  
 
+
     def memorize(self, optimizer_pose):
         optimizer_pose[0].zero_grad()
         optimizer_pose[1].zero_grad()
@@ -434,6 +435,12 @@ class LearnPoseNet_decouple_so3(nn.Module):
             optimizer_pose[1].step()
             optimizer_pose[0].zero_grad()
             optimizer_pose[1].zero_grad() 
+
+    def init_memory(self):
+        self.t_m = self.t.clone().detach().to(self.cfg['pose']['device'])
+        self.r_m = self.r.clone().detach().to(self.cfg['pose']['device'])
+        self.t_m[-2] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
+        self.r_m[-2] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
 
     def clean_memory(self):
         self.t_m = torch.zeros(size=(self.num_cams, 3))
@@ -474,13 +481,13 @@ class LearnPoseNet_decouple_so3(nn.Module):
         #     return c2w.to(self.cfg['pose']['device'])
 
         cam_id = int(cam_id)
-        if cam_id ==0 :
-            r = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
-            t = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
-            self.r[cam_id] = r.clone().detach()
-            self.t[cam_id] = t.clone().detach()
-            c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
-            return c2w
+        # if cam_id ==0 :
+        #     r = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     t = torch.tensor([0.,0.,0.]).to(self.cfg['pose']['device'])
+        #     self.r[cam_id] = r.clone().detach()
+        #     self.t[cam_id] = t.clone().detach()
+        #     c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
+        #     return c2w
 
         r = self.rotsnet(cam_id)
         t = self.transnet(cam_id)
@@ -494,6 +501,9 @@ class LearnPoseNet_decouple_so3(nn.Module):
         self.t[cam_id] = t.clone().detach()
         c2w = make_c2w(r.reshape(-1), t.reshape(-1))  # (4, 4)
 
+        if cam_id ==0 :
+            print(c2w)
+
         if self.init_c2w is not None:
             c2w = c2w @ self.init_c2w[cam_id]
 
@@ -504,6 +514,20 @@ class LearnPoseNet_decouple_so3(nn.Module):
         return c2w
     def get_t(self):
        return self.t
+    
+
+    def cal_temporal_loss(self, cam_id):
+        cam_id = int(cam_id)
+        t_reg = self.transnet(cam_id).reshape(-1)
+        r_reg = self.rotsnet(cam_id).reshape(-1)
+        #learned_poses = torch.stack([self.pose_param_net(i) for i in range(self.pose_param_net.num_cams)])
+        #last_epoch_poses = torch.stack([self.pose_param_net.get_last_epoch_poses(i) for i in range(self.pose_param_net.num_cams)])
+        #t_reg = torch.stack([self.transnet(i).reshape(-1) for i in range(self.num_cams)])
+        #r_reg = torch.stack([self.rotsnet(i).reshape(-1) for i in range(self.num_cams)])
+
+        reg_loss = torch.mean(torch.abs(t_reg - self.t_m[cam_id])) + torch.mean(torch.abs(r_reg - self.r_m[cam_id]))
+
+        return reg_loss     
     
     
 

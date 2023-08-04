@@ -128,6 +128,7 @@ training:
   vis_reprojection_every: 5000
   nearest_limit: 0.01
   annealing_epochs: 2000 #should be >=0
+  regularize: False
 extract_images:
   extraction_dir: extraction
   N_novel_imgs: 120

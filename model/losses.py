@@ -200,7 +200,11 @@ class Loss(nn.Module):
                                 weights['pc_weight'] * pc_loss+\
                                     weights['rgb_s_weight'] * rgb_s_loss+\
                                         weights['depth_consistency_weight'] * depth_consistency_loss
-                                                               
+
+        # regularize
+        # if self.cfg['pose']['regularize']:
+
+
         if torch.isnan(loss):
             breakpoint()
         return_dict = {

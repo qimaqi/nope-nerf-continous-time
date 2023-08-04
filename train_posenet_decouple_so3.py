@@ -114,12 +114,13 @@ def train(cfg):
             load_dict_rots = dict()
         epoch_it = load_dict_trans.get('epoch_it', -1)
         if pose_scheduler:
-            gamma = (0.01)**(1./(scheduling_start + scheduling_epoch))
-            scheduler_pose_trans = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_trans, gamma, last_epoch=epoch_it, verbose=False)
+            gamma_trans = (0.01)**(1./(scheduling_start + scheduling_epoch))
+            scheduler_pose_trans = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_trans, gamma_trans, last_epoch=epoch_it, verbose=False)
             # torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
             #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
             #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
-            scheduler_pose_rots = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_rots, gamma, last_epoch=epoch_it, verbose=False)
+            gamma_rots = (0.01)**(10./(scheduling_start + scheduling_epoch))
+            scheduler_pose_rots = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_rots, gamma_rots, last_epoch=epoch_it, verbose=False)
             #torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
             #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
             #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
@@ -221,8 +222,12 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
-        if cfg['pose']['memorize']:
-            pose_param_net.clean_memory()
+        # if cfg['pose']['memorize']:
+        #     pose_param_net.clean_memory()
+        if cfg['training']['regularize']:
+            pose_param_net.init_memory()
+
+
         for batch in train_loader:
             it += 1
             idx = batch.get('img.idx')

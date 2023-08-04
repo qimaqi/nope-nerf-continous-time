@@ -191,6 +191,10 @@ class DataField(object):
             else:
                 ran_idx = random.randint(1, min(self.random_ref, self.N_imgs-idx-1))
                 ref_idx = idx + ran_idx
+
+        # just debug test
+        # ref_idx = 0   
+             
         image = self.imgs[ref_idx]
         if self.dpt_depth is not None:
             dpt = self.dpt_depth[ref_idx]

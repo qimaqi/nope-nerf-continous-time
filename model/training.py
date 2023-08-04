@@ -60,7 +60,7 @@ class Trainer(object):
         self.weight_dist_2nd_loss = cfg['weight_dist_2nd_loss']
         self.weight_dist_1st_loss = cfg['weight_dist_1st_loss']
         self.depth_consistency_weight = cfg['depth_consistency_weight']
-
+        self.cfg = cfg
 
         self.loss = Loss(cfg)
 
@@ -113,6 +113,7 @@ class Trainer(object):
         if self.pose_param_net:
             c2w = self.pose_param_net(img_idx)
             world_mat = torch.inverse(c2w).unsqueeze(0)
+
         if self.optimizer_focal:
             fxfy = self.focal_net(0)
             camera_mat = torch.tensor([[[fxfy[0], 0, 0, 0], 
@@ -313,7 +314,7 @@ class Trainer(object):
                 R_rel_12 = Rt_rel_12[:, :3, :3]
                 t_rel_12 = Rt_rel_12[:, :3, 3]  
                 scale1 = scale_input 
-            else:
+            else: # why treat last differently
                 d1 = depth_ref
                 d2 = depth_input
                 img1 = ref_img
@@ -384,5 +385,11 @@ class Trainer(object):
         
         loss_dict['scale'] = scale_input
         loss_dict['shift'] = shift_input
+
+        if self.cfg['regularize']:
+            temporal_consistency_loss = self.pose_param_net.cal_temporal_loss(img_idx)
+            loss_dict['temporal_consistency_loss'] = temporal_consistency_loss
+            loss_dict['loss'] += temporal_consistency_loss*0.1
+
         return loss_dict
     

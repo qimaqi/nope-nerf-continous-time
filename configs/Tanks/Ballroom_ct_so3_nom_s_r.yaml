@@ -10,18 +10,16 @@ pose:
   lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   max_index: 120
   device: cuda:0
-  memorize: True
-  scheduler: False
+  memorize: False
+  scheduler: True
 dataloading:
   path: /SSD1/qimaqi/Tanks
-  scene: ['Ignatius']
+  scene: ['Ballroom']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/Ignatius_ct_decouple_pretrain_so3_mem_debug_ref0
+  out_dir:  out/Tanks/Ballroom_ct_so3_nom_s_r
   auto_scheduler: True
-  # scheduling_epoch: 5000
-  # scheduling_start: 5000
-  # checkpoint_every: 2500
+  regularize: True
 extract_images:
   resolution: [540, 960]
