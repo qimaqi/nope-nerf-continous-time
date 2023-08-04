@@ -113,7 +113,7 @@ def train(cfg):
             load_dict_trans = dict()
             load_dict_rots = dict()
         epoch_it = load_dict_trans.get('epoch_it', -1)
-        if pose_scheduler:
+        if not auto_scheduler: #pose_scheduler:
             gamma_trans = (0.01)**(1./(scheduling_start + scheduling_epoch))
             scheduler_pose_trans = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_trans, gamma_trans, last_epoch=epoch_it, verbose=False)
             # torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
@@ -222,11 +222,8 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
-        # if cfg['pose']['memorize']:
-        #     pose_param_net.clean_memory()
-        if cfg['training']['regularize']:
-            pose_param_net.init_memory()
-
+        if cfg['pose']['memorize']:
+            pose_param_net.clean_memory()
 
         for batch in train_loader:
             it += 1
@@ -300,8 +297,8 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        # if cfg['pose']['memorize']:
-        #     pose_param_net.memorize(optimizer_pose)
+        if cfg['pose']['memorize']:
+            pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 print("learned_poses start")
@@ -333,19 +330,19 @@ def train(cfg):
             tqdm.write('{0:6d} ep: Train: PSNR: {1:.3f}'.format(epoch_it, psnr))
             logger.add_scalar('train/psnr', psnr, it)
             
-        if pose_scheduler:
-            if cfg['pose']['learn_pose']:
-                scheduler_pose_trans.step()
-                scheduler_pose_rots.step()
-                new_lr_pose = scheduler_pose_trans.get_lr()[0]
-                print("new_lr_pose",new_lr_pose)
+        # if pose_scheduler:
+        #     if cfg['pose']['learn_pose']:
+        #         scheduler_pose_trans.step()
+        #         scheduler_pose_rots.step()
+        #         new_lr_pose = scheduler_pose_trans.get_lr()[0]
+        #         print("new_lr_pose",new_lr_pose)
 
         if not auto_scheduler:
             scheduler.step()
             new_lr = scheduler.get_lr()[0]
-            # if cfg['pose']['learn_pose']:
-            #     scheduler_pose.step()
-            #     new_lr_pose = scheduler_pose.get_lr()[0]
+            if cfg['pose']['learn_pose']:
+                scheduler_pose.step()
+                new_lr_pose = scheduler_pose.get_lr()[0]
             if cfg['pose']['learn_focal']:
                 scheduler_focal.step()
                 new_lr_focal = scheduler_focal.get_lr()[0]
@@ -372,13 +369,13 @@ def train(cfg):
                 new_lr = cfg['training']['learning_rate'] * ((cfg['training']['scheduler_gamma'])**int((epoch_it-scheduling_start)/10))
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = new_lr
-                # if cfg['pose']['learn_pose']:
-                #     new_lr_pose_t = cfg['pose']['pose_lr_t'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
-                #     new_lr_pose_r = cfg['pose']['pose_lr_r'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
-                #     for param_group in optimizer_pose[0].param_groups:
-                #         param_group['lr'] = new_lr_pose_t
-                #     for param_group in optimizer_pose[1].param_groups:
-                #         param_group['lr'] = new_lr_pose_r
+                if cfg['pose']['learn_pose']:
+                    new_lr_pose_t = cfg['pose']['pose_lr_t'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
+                    new_lr_pose_r = cfg['pose']['pose_lr_r'] * ((cfg['training']['scheduler_gamma_pose'])**int((epoch_it-scheduling_start)/100))
+                    for param_group in optimizer_pose[0].param_groups:
+                        param_group['lr'] = new_lr_pose_t
+                    for param_group in optimizer_pose[1].param_groups:
+                        param_group['lr'] = new_lr_pose_r
 
                 if cfg['pose']['learn_focal']:
                     new_lr_focal = cfg['training']['focal_lr'] * ((cfg['training']['scheduler_gamma_focal'])**int((epoch_it-scheduling_start)/100))

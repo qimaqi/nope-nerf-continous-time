@@ -314,7 +314,7 @@ class Trainer(object):
                 R_rel_12 = Rt_rel_12[:, :3, :3]
                 t_rel_12 = Rt_rel_12[:, :3, 3]  
                 scale1 = scale_input 
-            else: # why treat last differently
+            else: # why treat last differently, because 
                 d1 = depth_ref
                 d2 = depth_input
                 img1 = ref_img
@@ -387,9 +387,9 @@ class Trainer(object):
         loss_dict['shift'] = shift_input
 
         if self.cfg['regularize']:
-            temporal_consistency_loss = self.pose_param_net.cal_temporal_loss(img_idx)
+            temporal_consistency_loss = self.pose_param_net.cal_anchor_loss()*100
             loss_dict['temporal_consistency_loss'] = temporal_consistency_loss
-            loss_dict['loss'] += temporal_consistency_loss*0.1
+            loss_dict['loss'] += temporal_consistency_loss
 
         return loss_dict
     

@@ -42,6 +42,7 @@ def train(cfg):
     # init network
     network_type = cfg['model']['network_type']
     auto_scheduler = cfg['training']['auto_scheduler']
+    pose_scheduler = cfg['pose']['scheduler']
     scheduling_epoch = cfg['training']['scheduling_epoch']
     
 
@@ -113,12 +114,16 @@ def train(cfg):
             load_dict_rots = dict()
         epoch_it = load_dict_trans.get('epoch_it', -1)
         if not auto_scheduler:
-            scheduler_pose_trans = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
-                                                                milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
-                                                                gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
-            scheduler_pose_rots = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
-                                                                milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
-                                                                gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
+            gamma_trans = (0.01)**(1./(scheduling_start + scheduling_epoch))
+            scheduler_pose_trans = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_trans, gamma_trans, last_epoch=epoch_it, verbose=False)
+            # torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
+            #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
+            #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
+            gamma_rots = (0.01)**(10./(scheduling_start + scheduling_epoch))
+            scheduler_pose_rots = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_rots, gamma_rots, last_epoch=epoch_it, verbose=False)
+            #torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
+            #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
+            #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
     else:
         optimizer_pose_rots = None
         optimizer_pose_trans = None
@@ -330,6 +335,13 @@ def train(cfg):
             tqdm.write('{0:6d} ep: Train: PSNR: {1:.3f}'.format(epoch_it, psnr))
             logger.add_scalar('train/psnr', psnr, it)
             
+        # if pose_scheduler:
+        #     if cfg['pose']['learn_pose']:
+        #         scheduler_pose_trans.step()
+        #         scheduler_pose_rots.step()
+        #         new_lr_pose = scheduler_pose_trans.get_lr()[0]
+        #         print("new_lr_pose",new_lr_pose)
+
         if not auto_scheduler:
             scheduler.step()
             new_lr = scheduler.get_lr()[0]

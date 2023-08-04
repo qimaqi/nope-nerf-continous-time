@@ -12,14 +12,16 @@ pose:
   device: cuda:0
   cam_coord: False
   memorize: True
+  scheduler: True
 dataloading:
   path: /SSD1/qimaqi/Tanks
   scene: ['Ignatius']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/Ignatius_ct_decouple_pretrain_quad3
+  out_dir:  out/Tanks/Ignatius_ct_quad3_detach
   auto_scheduler: True
+  regularize: True
   # scheduling_epoch: 5000
   # scheduling_start: 5000
   # checkpoint_every: 2500
