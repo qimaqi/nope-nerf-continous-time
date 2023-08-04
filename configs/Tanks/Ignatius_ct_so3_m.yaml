@@ -18,7 +18,7 @@ dataloading:
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/Ignatius_ct_decouple_pretrain_so3_mem
+  out_dir:  out/Tanks/Ignatius_ct_decouple_pretrain_so3_mem_debug
   auto_scheduler: True
   # scheduling_epoch: 5000
   # scheduling_start: 5000

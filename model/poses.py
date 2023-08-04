@@ -358,13 +358,14 @@ class LearnPoseNet_decouple_quad3(nn.Module): # _quad 4
 
     def forward(self, cam_id):
         # decouple
-        # if cam_id == 0:
         #     c2w = make_c2w(torch.zeros(3), torch.zeros(3))  # (4, 4)
         #     return c2w.to(self.cfg['pose']['device'])
 
         cam_id = int(cam_id)
         r = self.rotsnet(cam_id)
         t = self.transnet(cam_id)
+        if cam_id == 0:
+            print("index0", r)
         self.t[cam_id] = t.clone().detach()
         if self.cfg['pose']['memorize']:
             if self.record[cam_id] == 0:

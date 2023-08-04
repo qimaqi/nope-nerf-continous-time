@@ -295,8 +295,8 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        if cfg['pose']['memorize']:
-            pose_param_net.memorize(optimizer_pose)
+        # if cfg['pose']['memorize']:
+        #     pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 print("learned_poses start")
@@ -333,13 +333,14 @@ def train(cfg):
                 scheduler_pose_trans.step()
                 scheduler_pose_rots.step()
                 new_lr_pose = scheduler_pose_trans.get_lr()[0]
+                print("new_lr_pose",new_lr_pose)
 
         if not auto_scheduler:
             scheduler.step()
             new_lr = scheduler.get_lr()[0]
-            if cfg['pose']['learn_pose']:
-                scheduler_pose.step()
-                new_lr_pose = scheduler_pose.get_lr()[0]
+            # if cfg['pose']['learn_pose']:
+            #     scheduler_pose.step()
+            #     new_lr_pose = scheduler_pose.get_lr()[0]
             if cfg['pose']['learn_focal']:
                 scheduler_focal.step()
                 new_lr_focal = scheduler_focal.get_lr()[0]
