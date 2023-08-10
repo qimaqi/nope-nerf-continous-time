@@ -1,0 +1,15 @@
+depth:
+  type: None
+pose:
+  learn_pose: True
+dataloading:
+  skip: 4
+  path: /workspace/eth/datasets/Tanks
+  scene: ['Horse']
+  customized_focal: False
+  random_ref: 1
+training:
+  out_dir:  out/Tanks/Horse_skip4
+  auto_scheduler: True
+extract_images:
+  resolution: [540, 960]

@@ -1,0 +1,39 @@
+depth:
+  type: None
+pose:
+  learn_pose: True
+  layers_feat: [null,256,256,256,256,256,256,256,256] 
+  skip: [4]
+  pose_lr_t: 1.e-4                                         # learning rate of camera poses
+  lr_pose_end: 2.e-5                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
+  pose_lr_r: 5.e-5                                          # learning rate of camera poses
+  lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
+  max_index: 131
+  device: cuda:0
+  memorize: False
+  scheduler: False
+dataloading:
+  path: /workspace/eth/datasets/Tanks
+  scene: ['Ballroom']
+  customized_focal: False
+  random_ref: 1
+training:
+  out_dir: out/Tanks/Ballroom_ct_so3_nom_rend_debug4
+  auto_scheduler: True
+  regularize: True
+  scheduling_start: 1000
+extract_images:
+  resolution: [540, 960]
+  model_file_pose: ''
+
+
+
+# ([[ 0.9525, -0.0337,  0.3026,  0.5981],                                                         
+#  [ 0.0300,  0.9994,  0.0169,  0.0343],                                                         
+#  [-0.3030, -0.0070,  0.9530,  0.1209],                                                         
+#  [ 0.0000,  0.0000,  0.0000,  1.0000]], device='cuda:0')                                       
+# learned_poses 1                                                                                       
+# tensor([[ 0.9516, -0.0340,  0.3056,  0.5995],                                                         
+#         [ 0.0300,  0.9994,  0.0177,  0.0360],                                                         
+#         [-0.3060, -0.0077,  0.9520,  0.1162],                                                         
+#         [ 0.0000,  0.0000,  0.0000,  1.0000]], device='cuda:0')  

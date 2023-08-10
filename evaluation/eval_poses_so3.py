@@ -40,13 +40,18 @@ with torch.no_grad():
         init_pose = None
     pose_param_net = mdl.LearnPoseNet_decouple_so3(N_imgs, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg=cfg, init_c2w=init_pose).to(device=device)
-    checkpoint_io_pose = mdl.CheckpointIO(out_dir, model=pose_param_net)
-    checkpoint_io_pose.load(cfg['extract_images']['model_file_pose'], device)
-    learned_poses = torch.stack([pose_param_net(i) for i in range(N_imgs)])
+    checkpoint_io_pose_trans = mdl.CheckpointIO(out_dir, model=pose_param_net.transnet)
+    checkpoint_io_pose_rots = mdl.CheckpointIO(out_dir, model=pose_param_net.rotsnet)
+    checkpoint_io_pose_trans.load(cfg['extract_images']['model_file_pose_trans'], device)
+    checkpoint_io_pose_rots.load(cfg['extract_images']['model_file_pose_rots'], device)
+    learned_poses = torch.stack([pose_param_net(i) for i in range(N_imgs)])[:-1]
+    print('eval/trans_x', learned_poses.data[:, 0, -1].abs().max()) # N x 4 x 4
+    print('eval/trans_y', learned_poses.data[:, 1, -1].abs().max()) # N x 4 x 4
+    print('eval/trans_z', learned_poses.data[:, 2, -1].abs().max()) # N x 4 x 4
 
     H = field['img'].H
     W = field['img'].W
-    gt_poses = field['img'].c2ws
+    gt_poses = field['img'].c2ws[:-1]
     if cfg['pose']['learn_focal']:
         focal_net = mdl.LearnFocal(cfg['pose']['learn_focal'], cfg['pose']['fx_only'], order=cfg['pose']['focal_order'])
         checkpoint_io_focal = mdl.CheckpointIO(out_dir, model=focal_net)
@@ -96,7 +101,7 @@ if args.vis:
     t_cmp_list = gt_poses[:, :3, 3]
 
     '''line set to note pose correspondence between two trajs'''
-    line_points = torch.cat([t_est_list, t_cmp_list], dim=0).cpu().numpy()  # (2N, 3)
+    line_points = torch.cat([t_est_list.cpu(), t_cmp_list.cpu()], dim=0).cpu().numpy()  # (2N, 3)
     line_ends = [[i, i+N_imgs] for i in range(N_imgs)]  # (N, 2) connect two end points.
 
 
@@ -110,7 +115,7 @@ if args.vis:
 
     geometry_to_draw.append(line_set)
 
-    o3d.visualization.draw_geometries(geometry_to_draw)
+    o3d.visualization.draw_plotly(geometry_to_draw)
 
 
 

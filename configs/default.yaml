@@ -71,6 +71,7 @@ distortion:
   learn_scale: True
   learn_shift: True
 training:
+  memorize: False
   type: nope_nerf
   load_dir: model.pt
   load_pose_dir: model_pose.pt
@@ -129,6 +130,8 @@ training:
   nearest_limit: 0.01
   annealing_epochs: 2000 #should be >=0
   regularize: False
+  clip_grad: 0
+  clip_start: 0
 extract_images:
   extraction_dir: extraction
   N_novel_imgs: 120
@@ -138,6 +141,8 @@ extract_images:
   resolution:
   model_file: model.pt
   model_file_pose: model_pose.pt
+  model_file_pose_trans: model_pose_trans.pt
+  model_file_pose_rots: model_pose_rots.pt
   model_file_focal: model_focal.pt
   eval_depth: False
   bspline_degree: 100

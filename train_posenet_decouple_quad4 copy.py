@@ -42,7 +42,6 @@ def train(cfg):
     # init network
     network_type = cfg['model']['network_type']
     auto_scheduler = cfg['training']['auto_scheduler']
-    pose_scheduler = cfg['pose']['scheduler']
     scheduling_epoch = cfg['training']['scheduling_epoch']
     
 
@@ -94,7 +93,7 @@ def train(cfg):
         else:
             init_pose = None
             
-        pose_param_net = mdl.LearnPoseNet_decouple_so3(n_views, cfg['pose']['learn_R'], 
+        pose_param_net = mdl.LearnPoseNet_decouple_quad4(n_views, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg, init_c2w=init_pose).to(device=device)
 
         
@@ -113,17 +112,13 @@ def train(cfg):
             load_dict_trans = dict()
             load_dict_rots = dict()
         epoch_it = load_dict_trans.get('epoch_it', -1)
-        if not auto_scheduler: #pose_scheduler:
-            gamma_trans = (0.01)**(1./(scheduling_start + scheduling_epoch))
-            scheduler_pose_trans = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_trans, gamma_trans, last_epoch=epoch_it, verbose=False)
-            # torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
-            #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
-            #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
-            gamma_rots = (0.01)**(10./(scheduling_start + scheduling_epoch))
-            scheduler_pose_rots = torch.optim.lr_scheduler.ExponentialLR(optimizer_pose_rots, gamma_rots, last_epoch=epoch_it, verbose=False)
-            #torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
-            #                                                    milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
-            #                                                    gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
+        if not auto_scheduler:
+            scheduler_pose_trans = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_trans, 
+                                                                milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
+                                                                gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)
+            scheduler_pose_rots = torch.optim.lr_scheduler.MultiStepLR(optimizer_pose_rots, 
+                                                                milestones=list(range(scheduling_start, scheduling_epoch+scheduling_start, 100)),
+                                                                gamma=cfg['training']['scheduler_gamma_pose'], last_epoch=epoch_it)                                                                
     else:
         optimizer_pose_rots = None
         optimizer_pose_trans = None
@@ -222,9 +217,7 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
-        if cfg['pose']['memorize']:
-            pose_param_net.clean_memory()
-
+        pose_param_net.clean_memory()
         for batch in train_loader:
             it += 1
             idx = batch.get('img.idx')
@@ -297,21 +290,24 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        if cfg['pose']['memorize']:
-            pose_param_net.memorize(optimizer_pose)
+        pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
-                # print("learned_poses start")
+                print("learned_poses start")
                 learned_poses = torch.stack([pose_param_net(i) for i in range(n_views)])
                 print("learned_poses 0 ")
                 print(learned_poses[0])
                 print("learned_poses 1 ")
                 print(learned_poses[1])
-                print("learned_poses -2 ")
-                print(learned_poses[-2])
                 print("learned_poses -1 ")
                 print(learned_poses[-1])
 
+                # for name, param in pose_param_net.rotsnet.named_parameters():
+                #     if param.grad is not None:
+                #         print(f'Parameter name: {name}')
+                #         print(f'Gradient:')
+                #         print(torch.mean(param.grad))
+                #         print('\n')
 
             c2ws_est_aligned = align_ate_c2b_use_a2b(learned_poses, gt_poses)
             ate = compute_ATE(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
@@ -324,15 +320,6 @@ def train(cfg):
             }
             for l, num in eval_dict.items():
                 logger.add_scalar('eval/'+l, num, it)
-            
-            logger.add_scalar('eval/trans_converge', learned_poses.data[:, :3, -1].norm(), it)
-
-            logger.add_scalar('eval/trans_x_start', learned_poses.data[0, 0, -1], it) # N x 4 x 4
-            logger.add_scalar('eval/trans_y_start', learned_poses.data[0, 1, -1], it) # N x 4 x 4
-            logger.add_scalar('eval/trans_z_start', learned_poses.data[0, 2, -1], it) # N x 4 x 4
-            logger.add_scalar('eval/trans_x_end', learned_poses.data[-1, 0, -1], it) # N x 4 x 4
-            logger.add_scalar('eval/trans_y_end', learned_poses.data[-1, 1, -1], it) # N x 4 x 4
-            logger.add_scalar('eval/trans_z_end', learned_poses.data[-1, 2, -1], it) # N x 4 x 4
 
 
         if (eval_img_every>0 and (epoch_it % eval_img_every) == 0):    
@@ -341,13 +328,6 @@ def train(cfg):
             tqdm.write('{0:6d} ep: Train: PSNR: {1:.3f}'.format(epoch_it, psnr))
             logger.add_scalar('train/psnr', psnr, it)
             
-        # if pose_scheduler:
-        #     if cfg['pose']['learn_pose']:
-        #         scheduler_pose_trans.step()
-        #         scheduler_pose_rots.step()
-        #         new_lr_pose = scheduler_pose_trans.get_lr()[0]
-        #         print("new_lr_pose",new_lr_pose)
-
         if not auto_scheduler:
             scheduler.step()
             new_lr = scheduler.get_lr()[0]
@@ -373,8 +353,7 @@ def train(cfg):
                         scheduling_start = epoch_it
             if epoch_it < scheduling_start:
                 new_lr = cfg['training']['learning_rate']
-                new_lr_pose_t = cfg['pose']['pose_lr_t']
-                new_lr_pose_r = cfg['pose']['pose_lr_r']
+                new_lr_pose = cfg['training']['pose_lr']
                 new_lr_focal = cfg['training']['focal_lr']
                 new_lr_distortion = cfg['training']['distortion_lr']
             else:
@@ -404,8 +383,7 @@ def train(cfg):
 
         logger.add_scalar('train/lr', new_lr, it)
         if cfg['pose']['learn_pose']:
-            logger.add_scalar('train/lr_pose_trans', new_lr_pose_t, it)
-            logger.add_scalar('train/lr_pose_rots', new_lr_pose_r, it)
+            logger.add_scalar('train/lr_pose', new_lr_pose, it)
         if cfg['pose']['learn_focal']:
             logger.add_scalar('train/lr_focal', new_lr_focal, it)
         if cfg['distortion']['learn_distortion']:

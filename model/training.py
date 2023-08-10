@@ -96,6 +96,11 @@ class Trainer(object):
         self.optimizer.step()
         if self.optimizer_pose:
             if isinstance(self.optimizer_pose, list):
+                if self.cfg['clip_grad']: #it > 20*1000:
+                    if it > self.cfg['clip_start']:
+                        # print("start clipping")
+                        torch.nn.utils.clip_grad_norm_(self.pose_param_net.transnet.parameters(), self.cfg['clip_grad'])
+                        torch.nn.utils.clip_grad_norm_(self.pose_param_net.rotsnet.parameters(), self.cfg['clip_grad'])
                 self.optimizer_pose[0].step()
                 self.optimizer_pose[1].step()
             else:
@@ -298,7 +303,7 @@ class Trainer(object):
                 else:
                     depth_ref = scale_ref * depth_ref + shift_ref
             if self.detach_ref_img:
-                c2w_ref = c2w_ref.detach()
+                c2w_ref = c2w_ref.detach() # also optimize pose
                 scale_ref = scale_ref.detach()
                 shift_ref = shift_ref.detach()
                 depth_ref = depth_ref.detach()
@@ -314,7 +319,7 @@ class Trainer(object):
                 R_rel_12 = Rt_rel_12[:, :3, :3]
                 t_rel_12 = Rt_rel_12[:, :3, 3]  
                 scale1 = scale_input 
-            else: # why treat last differently, because 
+            else: # why treat last differently, already detached
                 d1 = depth_ref
                 d2 = depth_input
                 img1 = ref_img
@@ -390,6 +395,12 @@ class Trainer(object):
             temporal_consistency_loss = self.pose_param_net.cal_anchor_loss()*100
             loss_dict['temporal_consistency_loss'] = temporal_consistency_loss
             loss_dict['loss'] += temporal_consistency_loss
+
+        if it > 10000:
+            if self.cfg['memorize']:
+                memorize_loss =  self.pose_param_net.cal_memorize_loss(img_idx) * 100
+                loss_dict['memorize_loss'] = memorize_loss
+                loss_dict['loss'] += memorize_loss
 
         return loss_dict
     

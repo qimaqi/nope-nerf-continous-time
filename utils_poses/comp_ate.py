@@ -1,8 +1,9 @@
 
 import numpy as np
-
+import pandas as pd
 import ATE.trajectory_utils as tu
 import ATE.transformations as tf
+
 def rotation_error(pose_error):
     """Compute rotation error
     Args:
@@ -45,12 +46,14 @@ def compute_rpe(gt, pred):
         
         trans_errors.append(translation_error(rel_err))
         rot_errors.append(rotation_error(rel_err))
-    import pandas as pd
-    df = pd.DataFrame({'rot_errors': np.array(rot_errors) * 180 / np.pi})
-    df.describe()    
-    print(df.describe(), np.array(rot_errors) * 180 / np.pi)
+
+    # df = pd.DataFrame({'rot_errors': np.array(rot_errors) * 180 / np.pi})  
+    # print(df.describe(), np.array(rot_errors) * 180 / np.pi)
+
     rpe_trans = np.mean(np.asarray(trans_errors))
     rpe_rot = np.mean(np.asarray(rot_errors))
+    # df = pd.DataFrame({'trans_errors': np.array(trans_errors)})   
+    # print(df.describe(), np.array(trans_errors))
     return rpe_trans, rpe_rot
 
 def compute_ATE(gt, pred):

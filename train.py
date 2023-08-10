@@ -199,7 +199,9 @@ def train(cfg):
     if eval_pose_every>0:
         gt_poses = train_dataset['img'].c2ws.to(device) 
     # for epoch_it in tqdm(range(epoch_start+1, exit_after), desc='epochs'):
+    # print("scheduling_start + scheduling_epoch", scheduling_start + scheduling_epoch)
     while epoch_it < (scheduling_start + scheduling_epoch):
+        # print("epoch_it",epoch_it)
         epoch_it +=1
         L2_loss_epoch = []
         pc_loss_epoch = []
@@ -277,7 +279,14 @@ def train(cfg):
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 learned_poses = torch.stack([pose_param_net(i) for i in range(n_views)])
-                print("learned_poses", learned_poses[0],learned_poses[-1])
+                print("learned_poses 0 ")
+                print(learned_poses[0])
+                print("learned_poses 1 ")
+                print(learned_poses[1])
+                print("learned_poses -2 ")
+                print(learned_poses[-2])
+                print("learned_poses -1 ")
+                print(learned_poses[-1])
             c2ws_est_aligned = align_ate_c2b_use_a2b(learned_poses, gt_poses)
             ate = compute_ATE(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
             rpe_trans, rpe_rot = compute_rpe(gt_poses.cpu().numpy(), c2ws_est_aligned.cpu().numpy())
@@ -289,6 +298,16 @@ def train(cfg):
             }
             for l, num in eval_dict.items():
                 logger.add_scalar('eval/'+l, num, it)
+            logger.add_scalar('eval/trans_converge', learned_poses.data[:, :, -1].norm(), it) # N x 4 x 4
+            logger.add_scalar('eval/trans_x_start', learned_poses.data[0, 0, -1], it) # N x 4 x 4
+            logger.add_scalar('eval/trans_y_start', learned_poses.data[0, 1, -1], it) # N x 4 x 4
+            logger.add_scalar('eval/trans_z_start', learned_poses.data[0, 2, -1], it) # N x 4 x 4
+            logger.add_scalar('eval/trans_x_end', learned_poses.data[-1, 0, -1], it) # N x 4 x 4
+            logger.add_scalar('eval/trans_y_end', learned_poses.data[-1, 1, -1], it) # N x 4 x 4
+            logger.add_scalar('eval/trans_z_end', learned_poses.data[-1, 2, -1], it) # N x 4 x 4
+
+
+
         if (eval_img_every>0 and (epoch_it % eval_img_every) == 0):    
             L2_loss_mean = np.mean(L2_loss_epoch)
             psnr = mse2psnr(L2_loss_mean)
