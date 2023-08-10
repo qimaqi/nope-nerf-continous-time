@@ -19,10 +19,11 @@ dataloading:
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/rebuttal/R_Ignatius_ours_skip4_quad4_mem
+  out_dir:  out/Tanks/rebuttal/R_Ignatius_ours_skip4_so3
   auto_scheduler: True
   regularize: True
   memorize: True
+  regularize: True
 
 extract_images:
   resolution: [540, 960]

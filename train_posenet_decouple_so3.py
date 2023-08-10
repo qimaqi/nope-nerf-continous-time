@@ -222,8 +222,8 @@ def train(cfg):
         L2_loss_epoch = []
         pc_loss_epoch = []
         rgb_s_loss_epoch = []
-        if cfg['pose']['memorize']:
-            pose_param_net.clean_memory()
+        if cfg['training']['memorize']:
+            pose_param_net.init_memory()
 
         for batch in train_loader:
             it += 1
@@ -297,8 +297,7 @@ def train(cfg):
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
         logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        if cfg['pose']['memorize']:
-            pose_param_net.memorize(optimizer_pose)
+
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 # print("learned_poses start")

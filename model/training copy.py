@@ -251,9 +251,7 @@ class Trainer(object):
 
         if self.pose_param_net is not None:
             num_cams = self.pose_param_net.num_cams
-            # c2w_all = self.pose_param_net.get_all_training_poses()
             # to save time change this to run batch wise
-            # c2w = c2w_all[img_idx]
             c2w = self.pose_param_net(img_idx)
             world_mat = torch.inverse(c2w).unsqueeze(0)
         
@@ -299,7 +297,6 @@ class Trainer(object):
 
         if use_ref_imgs:
             c2w_ref = self.pose_param_net(ref_idx) # run poses
-            # c2w_ref = c2w_all[ref_idx]
             if self.distortion_net is not None:
                 scale_ref, shift_ref = self.distortion_net(ref_idx)
                 if self.shift_first:
@@ -307,7 +304,7 @@ class Trainer(object):
                 else:
                     depth_ref = scale_ref * depth_ref + shift_ref
             if self.detach_ref_img:
-                c2w_ref = c2w_ref.clone().detach() # also optimize pose
+                c2w_ref = c2w_ref.detach() # also optimize pose
                 scale_ref = scale_ref.detach()
                 shift_ref = shift_ref.detach()
                 depth_ref = depth_ref.detach()
@@ -402,7 +399,7 @@ class Trainer(object):
 
         if it > 10000:
             if self.cfg['memorize']:
-                memorize_loss =  self.pose_param_net.cal_memorize_loss(img_idx, c2w_all) * 100
+                memorize_loss =  self.pose_param_net.cal_memorize_loss(img_idx) * 100
                 loss_dict['memorize_loss'] = memorize_loss
                 loss_dict['loss'] += memorize_loss
 
