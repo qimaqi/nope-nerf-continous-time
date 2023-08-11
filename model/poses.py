@@ -212,8 +212,8 @@ class LearnPoseNet_decouple_quad4(nn.Module): # _quad 4
     def init_memory(self):
         self.t_m = self.t.clone().detach().to(self.cfg['pose']['device'])
         self.r_m = self.r.clone().detach().to(self.cfg['pose']['device'])
-        self.t_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
-        self.r_m[-1] = torch.tensor([1,0,0,0]).to(self.cfg['pose']['device'])
+        # self.t_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
+        # self.r_m[-1] = torch.tensor([1,0,0,0]).to(self.cfg['pose']['device'])
         self.record = torch.zeros(size=(self.num_cams, 1))  
 
     def init_posenet_train(self, optimizer_pose):
@@ -263,7 +263,7 @@ class LearnPoseNet_decouple_quad4(nn.Module): # _quad 4
         self.r[cam_id] = r.clone().detach()
 
         if self.cfg['training']['memorize']:
-            if self.record[cam_id] == 0 and cam_id!=self.num_cams-1: #leave id -1 always be 0
+            if self.record[cam_id] == 0: #and cam_id!=self.num_cams-1: #leave id -1 always be 0
                 self.record[cam_id]+=1
                 self.t_m[cam_id] = t.clone().detach()
                 self.r_m[cam_id] = r.clone().detach()
@@ -294,7 +294,7 @@ class LearnPoseNet_decouple_quad4(nn.Module): # _quad 4
 
     def cal_anchor_loss(self):
         # force the timestamp0 always be identity
-        cam_id = int(self.num_cams-1)
+        cam_id = int(self.num_cams)
         t_reg = self.transnet(cam_id).reshape(-1)
         r_reg = self.rotsnet(cam_id).reshape(-1)
         reg_loss = torch.mean(torch.abs(t_reg - torch.tensor([0,0,0]).to(self.cfg['pose']['device']))) + torch.mean(torch.abs(r_reg - torch.tensor([1,0,0,0]).to(self.cfg['pose']['device'])))
@@ -508,8 +508,8 @@ class LearnPoseNet_decouple_so3(nn.Module):
     def init_memory(self):
         self.t_m = self.t.clone().detach().to(self.cfg['pose']['device'])
         self.r_m = self.r.clone().detach().to(self.cfg['pose']['device'])
-        self.t_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
-        self.r_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
+        # self.t_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
+        # self.r_m[-1] = torch.tensor([0,0,0]).to(self.cfg['pose']['device'])
         self.record = torch.zeros(size=(self.num_cams, 1))  
 
 
@@ -562,8 +562,8 @@ class LearnPoseNet_decouple_so3(nn.Module):
 
         r = self.rotsnet(cam_id)
         t = self.transnet(cam_id)
-        if self.cfg['pose']['memorize']:
-            if self.record[cam_id] == 0 and cam_id!=self.num_cams-1:
+        if self.cfg['training']['memorize']:
+            if self.record[cam_id] == 0:
                 self.record[cam_id]+=1
                 self.t_m[cam_id] = t.clone().detach()
                 self.r_m[cam_id] = r.clone().detach()

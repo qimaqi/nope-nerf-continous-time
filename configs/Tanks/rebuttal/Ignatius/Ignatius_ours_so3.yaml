@@ -5,23 +5,24 @@ pose:
   learn_pose: True
   layers_feat: [null,256,256,256,256,256,256,256,256] 
   skip: [4]
-  pose_lr_t: 5.e-4                                         # learning rate of camera poses
+  pose_lr_t: 5.e-4                                       # learning rate of camera poses
   lr_pose_end: 2.e-5                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
-  pose_lr_r: 2.e-5                                          # learning rate of camera poses
+  pose_lr_r: 5.e-5                                          # learning rate of camera poses
   lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
-  max_index: 27
+  max_index: 106
   device: cuda:0
-  memorize: False
 dataloading:
-  skip: 4
-  path: /SSD1/qimaqi/Tanks
-  scene: ['Horse']
+  path: /workspace/eth/datasets/Tanks
+  scene: ['Ignatius']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/rebuttal/R_Horse_ours_skip4_quad4_mem
+  out_dir:  out/Tanks/rebuttal/R_Ignatius_ours_so3_mem
   auto_scheduler: True
   regularize: True
   memorize: True
+  memorize_start: 20000
 extract_images:
   resolution: [540, 960]
+
+

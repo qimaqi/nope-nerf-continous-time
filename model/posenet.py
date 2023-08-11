@@ -369,7 +369,7 @@ class RotsNet_so3(torch.nn.Module): # quad 4
             if li in self.cfg['pose']['skip']: feat = torch.cat([feat,points_enc],dim=-1)
             feat = layer(feat)
             if li==len(self.mlp_quad)-1:
-                feat = torch.nn.functional.softplus(feat)
+                feat = feat #torch.nn.functional.softplus(feat)
             else:
                 feat = torch_F.relu(feat) # softplus_act(translation_feat)
 

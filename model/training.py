@@ -400,9 +400,9 @@ class Trainer(object):
             loss_dict['temporal_consistency_loss'] = temporal_consistency_loss
             loss_dict['loss'] += temporal_consistency_loss
 
-        if it > 10000:
+        if it > self.cfg['memorize_start']:
             if self.cfg['memorize']:
-                memorize_loss =  self.pose_param_net.cal_memorize_loss(img_idx, c2w_all) * 100
+                memorize_loss =  self.pose_param_net.cal_memorize_loss(img_idx) * 100
                 loss_dict['memorize_loss'] = memorize_loss
                 loss_dict['loss'] += memorize_loss
 
