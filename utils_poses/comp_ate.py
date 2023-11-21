@@ -45,10 +45,10 @@ def compute_rpe(gt, pred):
         
         trans_errors.append(translation_error(rel_err))
         rot_errors.append(rotation_error(rel_err))
-    import pandas as pd
-    df = pd.DataFrame({'rot_errors': np.array(rot_errors) * 180 / np.pi})
-    df.describe()    
-    print(df.describe(), np.array(rot_errors) * 180 / np.pi)
+    # import pandas as pd
+    # df = pd.DataFrame({'rot_errors': np.array(rot_errors) * 180 / np.pi})
+    # df.describe()    
+    # print(df.describe(), np.array(rot_errors) * 180 / np.pi)
     rpe_trans = np.mean(np.asarray(trans_errors))
     rpe_rot = np.mean(np.asarray(rot_errors))
     return rpe_trans, rpe_rot

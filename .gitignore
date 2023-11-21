@@ -7,3 +7,4 @@ run.sh
 third_party/
 out/
 arc.sh
+sbatch_log

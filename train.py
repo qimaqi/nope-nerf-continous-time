@@ -198,8 +198,15 @@ def train(cfg):
     # load gt poses for evaluation
     if eval_pose_every>0:
         gt_poses = train_dataset['img'].c2ws.to(device) 
+
+    # change to tqdm to estimate time
     # for epoch_it in tqdm(range(epoch_start+1, exit_after), desc='epochs'):
+    iter_time_cost = 0
+
     while epoch_it < (scheduling_start + scheduling_epoch):
+        if epoch_it % 100 == 0:
+            print("estimate finish time", iter_time_cost *  (scheduling_start + scheduling_epoch - epoch_it) / 3600 )
+        iter_time_start = time.time()
         epoch_it +=1
         L2_loss_epoch = []
         pc_loss_epoch = []
@@ -351,6 +358,8 @@ def train(cfg):
             logger.add_scalar('train/lr_focal', new_lr_focal, it)
         if cfg['distortion']['learn_distortion']:
             logger.add_scalar('train/lr_distortion', new_lr_distortion, it)
+
+        iter_time_cost = time.time() - iter_time_start
 
 if __name__=='__main__':
     # Arguments

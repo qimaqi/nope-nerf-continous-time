@@ -4,21 +4,23 @@ pose:
   learn_pose: True
   layers_feat: [null,256,256,256,256,256,256,256,256] 
   skip: [4]
-  pose_lr_t: 1.e-4                                          # learning rate of camera poses
-  lr_pose_end: 2.e-5                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
+  posenc: 5
+  pose_lr_t: 5.e-6                                          # learning rate of camera poses
+  lr_pose_end: 5.e-7                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   pose_lr_r: 1.e-6                                          # learning rate of camera poses
-  lr_rots_end: 2.e-6                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
+  lr_rots_end: 2.e-7                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   max_index: 120
   device: cuda:0
 dataloading:
-  path: /SSD1/qimaqi/Tanks
+  path: ./data/Tanks
   scene: ['Ignatius']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir:  out/Tanks/Ignatius_ct_decouple_pretrain_quad
+  out_dir: ./out/Tanks/Ignatius_ct_debug
   auto_scheduler: True
-  # scheduling_epoch: 5000
+  scheduling_epoch: 5000
+  regularize: True
   # scheduling_start: 5000
   # checkpoint_every: 2500
 extract_images:

@@ -11,5 +11,6 @@ dataloading:
 training:
   out_dir:  out/Tanks/Family
   auto_scheduler: True
+  scheduling_epoch: 5000
 extract_images:
   resolution: [540, 960]
