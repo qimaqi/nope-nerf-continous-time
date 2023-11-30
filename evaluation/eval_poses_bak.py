@@ -38,10 +38,20 @@ with torch.no_grad():
             init_pose = field['img'].c2ws_colmap
     else:
         init_pose = None
-    pose_param_net = mdl.LearnPose(N_imgs, cfg['pose']['learn_R'], 
+    pose_param_net = mdl.LearnPoseNet(N_imgs, cfg['pose']['learn_R'], 
                             cfg['pose']['learn_t'], cfg=cfg, init_c2w=init_pose).to(device=device)
-    checkpoint_io_pose = mdl.CheckpointIO(out_dir, model=pose_param_net)
-    checkpoint_io_pose.load(cfg['extract_images']['model_file_pose'], device)
+
+    checkpoint_io_pose_rots = mdl.CheckpointIO(out_dir, model=pose_param_net.rotsnet)
+    checkpoint_io_pose_trans = mdl.CheckpointIO(out_dir, model=pose_param_net.transnet)
+    checkpoint_io_pose_rots.load(cfg['extract_images']['model_file_rots'], device)
+    checkpoint_io_pose_trans.load(cfg['extract_images']['model_file_trans'], device)
+
+
+    # checkpoint_io_pose_rots.save('model_pose_rots.pt', epoch_it=epoch_it, it=it)
+    # checkpoint_io_pose_trans.save('model_pose_trans.pt', epoch_it=epoch_it, it=it)
+
+    # checkpoint_io_pose = mdl.CheckpointIO(out_dir, model=pose_param_net)
+    # checkpoint_io_pose.load(cfg['extract_images']['model_file_pose'], device)
     learned_poses = torch.stack([pose_param_net(i) for i in range(N_imgs)])
 
     H = field['img'].H

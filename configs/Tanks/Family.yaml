@@ -14,3 +14,5 @@ training:
   scheduling_epoch: 5000
 extract_images:
   resolution: [540, 960]
+eval_pose:
+  type_to_eval: train

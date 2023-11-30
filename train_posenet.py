@@ -289,8 +289,10 @@ def train(cfg):
         pc_loss_epoch = np.mean(pc_loss_epoch)
         logger.add_scalar('train/loss_pc_epoch', pc_loss_epoch, it) 
         rgb_s_loss_epoch = np.mean(rgb_s_loss_epoch) 
-        logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it)  
-        # pose_param_net.memorize(optimizer_pose)
+        logger.add_scalar('train/loss_rgbs_epoch', rgb_s_loss_epoch, it) 
+        
+        if epoch_it < scheduling_start: 
+            pose_param_net.memorize(optimizer_pose)
         if (eval_pose_every>0 and (epoch_it % eval_pose_every) == 0):
             with torch.no_grad():
                 # print("learned_poses start")
@@ -341,6 +343,7 @@ def train(cfg):
                 scheduler_distortion.step()
                 new_lr_distortion = scheduler_distortion.get_lr()[0]
         else:
+            # auto auto_scheduler 
             psnr_window.append(psnr)
             if len(psnr_window) >= length_smooth:
                 psnr_window = psnr_window[-length_smooth:]

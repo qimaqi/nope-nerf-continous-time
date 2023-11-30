@@ -15,4 +15,4 @@ python train.py configs/Tanks/Church.yaml
 #  sbatch --output=sbatch_log/baseline_Church_3days.out --time=3-0 --gpus=rtx_2080_ti:1 --mem-per-cpu=40g cvpr_exps_baseline_Church.sh
 
 
-# checked: 36637838
+# checked: 36691875pu=40g

@@ -14,5 +14,4 @@ python train.py configs/Tanks/Horse.yaml
 
 #  sbatch --output=sbatch_log/baseline_Horse_3days.out --time=3-0 --gpus=rtx_2080_ti:1 --mem-per-cpu=40g cvpr_exps_baseline_Horse.sh
 
-
-# checked: 36636656
+# python evaluation/eval.py configs/Tanks/Horse.yaml

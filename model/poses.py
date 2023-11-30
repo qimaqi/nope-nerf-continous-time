@@ -60,6 +60,8 @@ class LearnPoseNet(nn.Module): # _quad 4
         self.r_m = torch.zeros(size=(self.num_cams, 4))  
         self.pose_weight = torch.ones(size=(self.num_cams, 1)).to(self.cfg['pose']['device']) 
         self.pose_weight[0] = 1
+        self.c2w_anchor = torch.eye(4).to(self.cfg['pose']['device']) 
+        self.record = torch.zeros(size=(self.num_cams, 1))   
     
     def memorize(self, optimizer_pose):
         optimizer_pose[0].zero_grad()
@@ -135,13 +137,14 @@ class LearnPoseNet(nn.Module): # _quad 4
             self.t_m[cam_id] = t.clone().detach()
             self.r_m[cam_id] = r.clone().detach()
         
-
         # self.r[cam_id] = r.clone().detach()
         self.t[cam_id] = t.clone().detach()
 
         rots_mat = rotation_conversions.quaternion_to_matrix(r)
         c2w = torch.cat([rots_mat.reshape(3,3), t.reshape(3,1)], dim=-1)
         c2w = torch.cat([c2w, torch.tensor([0,0,0,1]).reshape(1,4).to(c2w.device) ], dim=0)
+
+        # to stabilize training, change coordinate to first frame
         
         if self.cfg['pose']['cam_coord']:
             c2w = torch.inverse(c2w)
@@ -149,12 +152,19 @@ class LearnPoseNet(nn.Module): # _quad 4
         if self.init_c2w is not None:
             c2w = c2w @ self.init_c2w[cam_id]
         
+        if cam_id == 0:
+            self.c2w_anchor = c2w.clone().detach() 
+        c2w = self.c2w_anchor.inverse() @ c2w
+
+
+
         return c2w
+
     def get_t(self):
        return self.t
     
     def cal_anchor_loss(self):
-        cam_id = self.num_cams - 1 # fix last 
+        cam_id = 0 #self.num_cams - 1 # fix last 
         t_reg = self.transnet(cam_id).reshape(-1)
         r_reg = self.rotsnet(cam_id).reshape(-1)
 

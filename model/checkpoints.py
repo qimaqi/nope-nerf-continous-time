@@ -58,6 +58,9 @@ class CheckpointIO(object):
         Args:
             filename (str): name of saved module dictionary
         '''
+        # if isinstance(filename, list):
+        #     for filename_i in filename:
+
         if is_url(filename):
             return self.load_url(filename)
         else:

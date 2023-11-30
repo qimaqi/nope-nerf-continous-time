@@ -5,24 +5,22 @@ pose:
   layers_feat: [null,256,256,256,256,256,256,256,256] 
   skip: [4]
   posenc: 5
-  pose_lr_t: 5.e-5                                          # learning rate of camera poses
+  pose_lr_t: 5.e-6                                          # learning rate of camera poses
   lr_pose_end: 5.e-7                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
-  pose_lr_r: 1.e-5                                         # learning rate of camera poses
+  pose_lr_r: 1.e-6                                          # learning rate of camera poses
   lr_rots_end: 2.e-7                                      # terminal learning rate of camera poses (only used with sched_pose.type=ExponentialLR)
   max_index: 120
   device: cuda:0
 dataloading:
-  path: ./data/Tanks
-  scene: ['Ignatius']
+  path: data/Tanks
+  scene: ['Horse']
   customized_focal: False
   random_ref: 1
 training:
-  out_dir: ./out/Tanks/Ignatius_ct_memorize
+  out_dir:  out/Tanks/Horse_ct_mem
   auto_scheduler: True
   scheduling_epoch: 5000
   regularize: True
-  # scheduling_start: 5000
-  # checkpoint_every: 2500
 extract_images:
   resolution: [540, 960]
   model_file_pose: [model_pose_rots.pt, model_pose_trans.pt]

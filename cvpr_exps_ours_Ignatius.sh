@@ -10,11 +10,11 @@ export PYTHONPATH=$HOME/.local/lib/python3.8/site-packages:$PYTHONPATH
 module load eth_proxy
 pip install timm
 
-python train.py configs/Tanks/Museum.yaml
+python train_posenet.py configs/Tanks/Ignatius_ct.yaml
 
-#  sbatch --output=sbatch_log/baseline_Museum_3days.out --time=3-0 --gpus=rtx_2080_ti:1 --mem-per-cpu=40g cvpr_exps_baseline_Museum.sh
+#  sbatch --output=sbatch_log/3days_ours_Ignatius_0.out --time=3-0 --gpus=titan_rtx:1 --mem-per-cpu=40g cvpr_exps_ours_Ignatius.sh
 
 
-# checked: 36636603
+# checked: 
 
-# python evaluation/eval.py configs/Tanks/Museum.yaml
+# python evaluation/eval_poses.py configs/Tanks/Ignatius_ct.yaml

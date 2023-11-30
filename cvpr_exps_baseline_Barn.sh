@@ -15,4 +15,6 @@ python train.py configs/Tanks/Barn.yaml
 #  sbatch --output=sbatch_log/baseline_Barn_3days.out --time=3-0 --gpus=rtx_2080_ti:1 --mem-per-cpu=40g cvpr_exps_baseline_Barn.sh
 
 
-# checked: 36637901
+# checked: 36691876=40g
+
+# python evaluation/eval.py configs/Tanks/Barn.yaml

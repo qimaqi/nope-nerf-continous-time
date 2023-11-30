@@ -12,7 +12,7 @@ pip install timm
 
 python train.py configs/Tanks/Ignatius.yaml
 
-#  sbatch --output=sbatch_log/3days_baseline_Ignatius_0.out --time=3-0 --gpus=rtx_2080_ti:1 --mem-per-cpu=40g cvpr_exps_baseline_Ignatius.sh
+#  sbatch --output=sbatch_log/3days_baseline_Ignatius_0_rerun.out --time=3-0 --gpus=titan_rtx:1 --mem-per-cpu=40g cvpr_exps_baseline_Ignatius.sh
 
-
+# python evaluation/eval.py configs/Tanks/Ignatius.yaml
 # checked: 36636555
